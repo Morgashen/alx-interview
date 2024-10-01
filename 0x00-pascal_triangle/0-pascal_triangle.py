@@ -2,20 +2,24 @@
 
 """A script to determine pascal's triangle for any number"""
 
-def pascal_triangle(n):
-    if n <= 0:
-        return []
-    
-    triangle = []
-    
-    for i in range(n):
-        row = [1] * (i + 1)  # Create a row with all elements initialized to 1
-        for j in range(1, i):
-            row[j] = triangle[i - 1][j - 1] + triangle[i - 1][j]  # Calculate the value based on the previous row
-        triangle.append(row)
-    
-    return triangle
 
-# Example usage:
-n = 5
-print(pascal_triangle(n))
+def pascal_triangle(n):
+    """
+    returns a list of lists of integers representing the Pascal’s triangle of n
+    """
+    triangle = []
+
+
+    if n <= 0:
+        return triangle
+    for i in range(n):
+        temp_list = []
+
+        for j in range(i+1):
+            if j == 0 or j == i:
+                temp_list.append(1)
+            else:
+                temp_list.append(triangle[i-1][j-1] + triangle[i-1][j])
+        triangle.append(temp_list)
+
+    return triangle
