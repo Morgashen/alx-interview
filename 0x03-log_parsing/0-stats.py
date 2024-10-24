@@ -1,56 +1,64 @@
 #!/usr/bin/python3
+"""
+Script that reads stdin line by line and computes metrics
+"""
 import sys
 import signal
+import re
 
-# Initialize variables
-total_size = 0
-status_codes_count = {
-    "200": 0, "301": 0, "400": 0, "401": 0,
-    "403": 0, "404": 0, "405": 0, "500": 0
-}
-line_count = 0
 
-# Function to print statistics
-def print_stats():
-    print(f"File size: {total_size}")
-    for code in sorted(status_codes_count.keys()):
-        if status_codes_count[code] > 0:
-            print(f"{code}: {status_codes_count[code]}")
+def print_stats(total_size, status_codes):
+    """Print the computed statistics"""
+    print("File size:", total_size)
+    for code in sorted(status_codes.keys()):
+        if status_codes[code] > 0:
+            print(f"{code}: {status_codes[code]}")
 
-# Signal handler for keyboard interruption (CTRL + C)
-def signal_handler(sig, frame):
-    print_stats()
-    sys.exit(0)
 
-# Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
+def main():
+    """Main function to process the log file"""
+    total_size = 0
+    line_count = 0
+    status_codes = {
+        200: 0, 301: 0, 400: 0, 401: 0,
+        403: 0, 404: 0, 405: 0, 500: 0
+    }
+    
+    # Regex pattern for line validation
+    pattern = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} - \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+\] "GET /projects/260 HTTP/1.1" (\d+) (\d+)$'
 
-# Main loop to read from stdin line by line
-try:
-    for line in sys.stdin:
-        line_count += 1
-        parts = line.split()
-        
-        # Check if the line matches the expected format
-        if len(parts) < 9 or parts[5] != '"GET' or parts[7] != 'HTTP/1.1"':
-            continue
-        
-        # Extract file size and status code
-        try:
-            status_code = parts[-2]
-            file_size = int(parts[-1])
-            total_size += file_size
+    def signal_handler(sig, frame):
+        """Handle keyboard interruption"""
+        print_stats(total_size, status_codes)
+        sys.exit(0)
 
-            if status_code in status_codes_count:
-                status_codes_count[status_code] += 1
+    # Register signal handler for CTRL+C
+    signal.signal(signal.SIGINT, signal_handler)
 
-        except (ValueError, IndexError):
-            continue
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            match = re.match(pattern, line)
+            
+            if match:
+                try:
+                    status_code = int(match.group(1))
+                    file_size = int(match.group(2))
+                    
+                    # Update metrics
+                    if status_code in status_codes:
+                        status_codes[status_code] += 1
+                    total_size += file_size
+                    line_count += 1
 
-        # After every 10 lines, print the statistics
-        if line_count % 10 == 0:
-            print_stats()
+                    # Print stats every 10 lines
+                    if line_count % 10 == 0:
+                        print_stats(total_size, status_codes)
+                except ValueError:
+                    continue
+    except KeyboardInterrupt:
+        print_stats(total_size, status_codes)
+        raise
 
-except KeyboardInterrupt:
-    print_stats()
-    sys.exit(0)
+if __name__ == "__main__":
+    main()
