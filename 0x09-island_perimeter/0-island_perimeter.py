@@ -12,8 +12,8 @@ def island_perimeter(grid):
     Calculate the perimeter of the island in the grid.
 
     Args:
-        grid (List[List[int]]): 2D grid where 1 represents land, 0 represents water.
-        Each cell is connected horizontally/vertically, not diagonally.
+grid (List[List[int]]): 2D grid where 1 represents land, 0 represents water.
+Each cell is connected horizontally/vertically, not diagonally.
 
     Returns:
         int: Total perimeter of the island.
